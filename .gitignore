@@ -1,0 +1,15 @@
+ 
+# Ignore compiled class files
+*.class
+
+# Ignore IDE settings
+.idea/
+.vscode/
+*.iml
+
+# Ignore OS system files
+.DS_Store
+Thumbs.db
+
+# Ignore dependencies if not using Maven/Gradle
+/lib/
