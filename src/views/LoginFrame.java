@@ -77,7 +77,7 @@ public class LoginFrame extends JFrame {
             if (user != null) {
                 JOptionPane.showMessageDialog(LoginFrame.this, "Login Successful!", "Success",
                         JOptionPane.INFORMATION_MESSAGE);
-                new EventFrame().setVisible(true);
+                new EventFrame(user).setVisible(true);
                 dispose(); // Close login frame
             } else {
                 JOptionPane.showMessageDialog(LoginFrame.this, "Invalid credentials. Try again.", "Login Failed",
