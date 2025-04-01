@@ -1,6 +1,6 @@
 📌 Medhāvīriti (मेधावीरिति) - Event Management System
 🔹 Project Overview
-Medhāvīriti (मेधावीरिति) is a JavaFX-based Event Management System designed to streamline event planning, organization, and booking. It provides an easy-to-use GUI interface for event coordinators and attendees, ensuring efficient event scheduling and management.
+Medhāvīriti (मेधावीरिति) is a JavaSwing Event Management System designed to streamline event planning, organization, and booking. It provides an easy-to-use GUI interface for event coordinators and attendees, ensuring efficient event scheduling and management.
 
 📌 Features
 ✅ User Authentication (Admin & Attendees)
