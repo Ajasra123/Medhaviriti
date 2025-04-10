@@ -9,7 +9,7 @@ import java.sql.SQLException;
 
 public class RegisterController {
 
-    public static boolean registerUser(String name, String email, String password) {
+    public static boolean registerUser(String username, String email, String password) {
         Connection conn = DatabaseConnection.connect();
 
         if (conn == null) {
@@ -17,10 +17,10 @@ public class RegisterController {
             return false;
         }
 
-        String query = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
+        String query = "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
 
         try (PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, name);
+            pstmt.setString(1, username);
             pstmt.setString(2, email);
             pstmt.setString(3, password);
 
@@ -29,14 +29,20 @@ public class RegisterController {
             if (rowsInserted > 0) {
                 JOptionPane.showMessageDialog(null, "Registration Successful! Redirecting to Login...", "Success", JOptionPane.INFORMATION_MESSAGE);
                 return true;
-            } else {
-                JOptionPane.showMessageDialog(null, "Registration Failed!", "Error", JOptionPane.ERROR_MESSAGE);
-                return false;
             }
-
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Error: " + e.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
-            return false;
+            String message = e.getMessage();
+            if (message.contains("Duplicate entry")) {
+                if (message.contains("username")) {
+                    JOptionPane.showMessageDialog(null, "Username already exists!", "Error", JOptionPane.ERROR_MESSAGE);
+                } else if (message.contains("email")) {
+                    JOptionPane.showMessageDialog(null, "Email already exists!", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(null, "Registration failed: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+            e.printStackTrace();
         }
+        return false;
     }
 }
