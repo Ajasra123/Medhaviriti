@@ -5,172 +5,339 @@ import models.User;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Calendar;
 
 public class EventFrame extends JFrame {
     private JComboBox<String> eventDropdown;
     private JTextField customEventField;
+    private JTextField locationField;
     private JFormattedTextField dateField;
+    private JSpinner timeSpinner;
     private JCheckBox customEventCheckbox;
     private JButton bookButton, myEventsButton;
     private User loggedInUser;
+    private List<Map<String, String>> availableEvents;
 
     public EventFrame(User user) {
         this.loggedInUser = user;
 
-        setTitle("Medhaviriti");
-        setSize(500, 400);
+        setTitle("Medhaviriti - Event Booking System");
+        setSize(600, 550);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(10, 10));
 
-        // Panel for Event Selection
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(new Color(240, 240, 240));
+        // Main Panel
+        JPanel mainPanel = new JPanel(new BorderLayout(20, 20));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        mainPanel.setBackground(new Color(245, 245, 250));
+
+        // Welcome Panel
+        JPanel welcomePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        welcomePanel.setBackground(new Color(245, 245, 250));
+        JLabel welcomeLabel = new JLabel("Welcome, " + user.getUsername() + "!");
+        welcomeLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        welcomePanel.add(welcomeLabel);
+
+        // Content Panel
+        JPanel contentPanel = new JPanel(new GridBagLayout());
+        contentPanel.setBackground(new Color(245, 245, 250));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
 
-        // Title Label
-        JLabel titleLabel = new JLabel("Select an Event to Book");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        // Title
+        JLabel titleLabel = new JLabel("Book Your Event");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        titleLabel.setForeground(new Color(33, 33, 33));
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
-        panel.add(titleLabel, gbc);
+        contentPanel.add(titleLabel, gbc);
 
-        // Event Label
-        gbc.gridx = 0;
+        // Event Selection
         gbc.gridy = 1;
         gbc.gridwidth = 1;
-        panel.add(new JLabel("Event:"), gbc);
+        JLabel eventLabel = new JLabel("Select Event:");
+        eventLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        contentPanel.add(eventLabel, gbc);
 
-        // Dropdown with event names
         gbc.gridx = 1;
-        eventDropdown = new JComboBox<>(getEventNames());
-        eventDropdown.setFont(new Font("Arial", Font.PLAIN, 14));
-        panel.add(eventDropdown, gbc);
+        eventDropdown = new JComboBox<>();
+        eventDropdown.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        eventDropdown.setBackground(Color.WHITE);
+        refreshEventList();
+        contentPanel.add(eventDropdown, gbc);
 
-        // Custom Event Checkbox
+        // Custom Event Option
         gbc.gridx = 0;
         gbc.gridy = 2;
         customEventCheckbox = new JCheckBox("Enter Custom Event");
-        panel.add(customEventCheckbox, gbc);
+        customEventCheckbox.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        customEventCheckbox.setBackground(new Color(245, 245, 250));
+        contentPanel.add(customEventCheckbox, gbc);
 
-        // Custom Event TextField
         gbc.gridx = 1;
-        customEventField = new JTextField(15);
+        customEventField = new JTextField();
+        customEventField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         customEventField.setEnabled(false);
-        panel.add(customEventField, gbc);
+        contentPanel.add(customEventField, gbc);
 
-        // Enable text field when checkbox is selected
-        customEventCheckbox.addActionListener(e -> {
-            customEventField.setEnabled(customEventCheckbox.isSelected());
-            eventDropdown.setEnabled(!customEventCheckbox.isSelected());
-        });
-
-        // Date Label
+        // Location Field
         gbc.gridx = 0;
         gbc.gridy = 3;
-        panel.add(new JLabel("Date (YYYY-MM-DD):"), gbc);
+        JLabel locationLabel = new JLabel("Location:");
+        locationLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        contentPanel.add(locationLabel, gbc);
 
-        // Date Input Field (Formatted)
+        gbc.gridx = 1;
+        locationField = new JTextField();
+        locationField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        contentPanel.add(locationField, gbc);
+
+        // Date Selection
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        JLabel dateLabel = new JLabel("Select Date:");
+        dateLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        contentPanel.add(dateLabel, gbc);
+
         gbc.gridx = 1;
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         dateField = new JFormattedTextField(dateFormat);
-        dateField.setColumns(10);
-        dateField.setFont(new Font("Arial", Font.PLAIN, 14));
-        dateField.setValue(new Date()); // Default to today’s date
-        panel.add(dateField, gbc);
+        dateField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        dateField.setValue(new Date());
+        contentPanel.add(dateField, gbc);
 
-        // Book Event Button
+        // Time Selection
         gbc.gridx = 0;
-        gbc.gridy = 4;
-        gbc.gridwidth = 2;
-        bookButton = new JButton("Book Event");
-        bookButton.setFont(new Font("Arial", Font.BOLD, 16));
-        bookButton.setBackground(new Color(0, 123, 255));
-        bookButton.setForeground(Color.WHITE);
-        bookButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        bookButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                bookSelectedEvent();
+        gbc.gridy = 5;
+        JLabel timeLabel = new JLabel("Select Time:");
+        timeLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        contentPanel.add(timeLabel, gbc);
+
+        gbc.gridx = 1;
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 9);
+        calendar.set(Calendar.MINUTE, 0);
+        SpinnerDateModel timeModel = new SpinnerDateModel(calendar.getTime(), null, null, Calendar.MINUTE);
+        timeSpinner = new JSpinner(timeModel);
+        JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(timeSpinner, "hh:mm a");
+        timeSpinner.setEditor(timeEditor);
+        timeSpinner.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        contentPanel.add(timeSpinner, gbc);
+
+        // Buttons Panel
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 20, 0));
+        buttonPanel.setBackground(new Color(245, 245, 250));
+
+        setupButtons();
+
+        buttonPanel.add(bookButton);
+        buttonPanel.add(myEventsButton);
+
+        // Add components to main panel
+        mainPanel.add(welcomePanel, BorderLayout.NORTH);
+        mainPanel.add(contentPanel, BorderLayout.CENTER);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Add main panel to frame
+        add(mainPanel);
+
+        // Event Listeners
+        customEventCheckbox.addActionListener(e -> {
+            boolean isCustom = customEventCheckbox.isSelected();
+            customEventField.setEnabled(isCustom);
+            eventDropdown.setEnabled(!isCustom);
+            locationField.setEnabled(isCustom);
+            if (!isCustom) {
+                updateLocationField();
             }
         });
-        panel.add(bookButton, gbc);
 
-        // My Events Button
-        gbc.gridy = 5;
+        eventDropdown.addActionListener(e -> updateLocationField());
+
+        // Initialize location field
+        updateLocationField();
+        locationField.setEnabled(false);
+    }
+
+    private void setupButtons() {
+        // Book Button setup
+        bookButton = new JButton("Book Event");
+        styleButton(bookButton, new Color(0, 120, 212));
+        bookButton.addActionListener(e -> bookSelectedEvent());
+
+        // My Events Button with fixed functionality
         myEventsButton = new JButton("My Events");
-        myEventsButton.setFont(new Font("Arial", Font.BOLD, 16));
-        myEventsButton.setBackground(Color.BLACK);
-        myEventsButton.setForeground(Color.WHITE);
-        myEventsButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        myEventsButton.addActionListener(e -> viewMyEvents());
-        panel.add(myEventsButton, gbc);
-
-        add(panel, BorderLayout.CENTER);
+        styleButton(myEventsButton, new Color(51, 51, 51));
+        myEventsButton.addActionListener(e -> {
+            try {
+                System.out.println("My Events button clicked for user: " + loggedInUser.getUsername());
+                EventManagementFrame frame = new EventManagementFrame(loggedInUser);
+                frame.setVisible(true);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, 
+                    "Error opening My Events: " + ex.getMessage(), 
+                    "Error", 
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        });
     }
 
-    // Fetch events from the database
-    private String[] getEventNames() {
-        List<String> events = EventController.getAllEventNames();
-        return events.isEmpty() ? new String[]{"No Events Available"} : events.toArray(new String[0]);
-    }
-
-    // Book selected event
-    private void bookSelectedEvent() {
-        String selectedEvent = customEventCheckbox.isSelected() ? customEventField.getText() : (String) eventDropdown.getSelectedItem();
-        String selectedDate = dateField.getText();
-
-        // Validate event name
-        if (selectedEvent == null || selectedEvent.trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter an event name.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
+    private void updateLocationField() {
+        if (!customEventCheckbox.isSelected() && eventDropdown.getSelectedIndex() != -1) {
+            Map<String, String> selectedEvent = availableEvents.get(eventDropdown.getSelectedIndex());
+            locationField.setText(selectedEvent.get("location"));
         }
+    }
 
-        // Validate date format
+    private void styleButton(JButton button, Color bgColor) {
+        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        button.setBackground(bgColor);
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(bgColor.brighter());
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(bgColor);
+            }
+        });
+    }
+
+    private void refreshEventList() {
+        availableEvents = EventController.getAllEvents();
+        eventDropdown.removeAllItems();
+        
+        for (Map<String, String> event : availableEvents) {
+            eventDropdown.addItem(event.get("name"));
+        }
+    }
+
+    private void bookSelectedEvent() {
+        String selectedDate = dateField.getText();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         sdf.setLenient(false);
+
         try {
+            // Parse selected date and time
+            Date selectedDateTime = new Date();
             Date date = sdf.parse(selectedDate);
+            
+            // Get selected time
+            SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a");
+            String selectedTime = timeFormat.format(timeSpinner.getValue());
+            Date time = timeFormat.parse(selectedTime);
+            
+            // Combine date and time
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(date);
+            Calendar timeCalendar = Calendar.getInstance();
+            timeCalendar.setTime(time);
+            
+            calendar.set(Calendar.HOUR_OF_DAY, timeCalendar.get(Calendar.HOUR_OF_DAY));
+            calendar.set(Calendar.MINUTE, timeCalendar.get(Calendar.MINUTE));
+            selectedDateTime = calendar.getTime();
+            
+            // Check if selected date/time is in the future
+            Date now = new Date();
+            if (selectedDateTime.before(now)) {
+                showError("Please select a future date and time.");
+                return;
+            }
         } catch (ParseException e) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid date in YYYY-MM-DD format.", "Error", JOptionPane.ERROR_MESSAGE);
+            showError("Please enter a valid date in YYYY-MM-DD format.");
             return;
         }
 
-        if (loggedInUser != null) {
-            boolean success = EventController.bookEvent(loggedInUser.getId(), selectedEvent, selectedDate);
-            if (success) {
-                JOptionPane.showMessageDialog(this, "Event booked successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(this, "Failed to book event!", "Error", JOptionPane.ERROR_MESSAGE);
+        // Get selected time in 24-hour format for database
+        SimpleDateFormat dbTimeFormat = new SimpleDateFormat("HH:mm");
+        String selectedTime = dbTimeFormat.format(timeSpinner.getValue());
+
+        if (customEventCheckbox.isSelected()) {
+            String customEventName = customEventField.getText().trim();
+            if (customEventName.isEmpty()) {
+                showError("Please enter a custom event name.");
+                return;
             }
-        }
-    }
 
-    // Show user's booked events
-    // Show user's booked events with full details
-    private void viewMyEvents() {
-        List<String[]> myEvents = EventController.getUserEvents(loggedInUser.getId());
+            String location = locationField.getText().trim();
+            if (location.isEmpty()) {
+                showError("Please enter a location.");
+                return;
+            }
 
-        if (myEvents.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No events booked yet!", "My Events", JOptionPane.INFORMATION_MESSAGE);
+            try {
+                boolean success = EventController.createAndBookEvent(
+                    loggedInUser.getId(), 
+                    customEventName, 
+                    selectedDate,
+                    selectedTime,
+                    location
+                );
+                if (success) {
+                    showSuccess("Custom event created and booked successfully!");
+                    refreshEventList();
+                    customEventField.setText("");
+                    locationField.setText("");
+                    customEventCheckbox.setSelected(false);
+                    customEventField.setEnabled(false);
+                    locationField.setEnabled(false);
+                    eventDropdown.setEnabled(true);
+                    updateLocationField();
+                } else {
+                    showError("Failed to create and book custom event.");
+                }
+            } catch (Exception e) {
+                showError("An error occurred: " + e.getMessage());
+            }
         } else {
-            StringBuilder eventDetails = new StringBuilder("Your Events:\n\n");
-            for (String[] event : myEvents) {
-                eventDetails.append("📌 Event: ").append(event[0])
-                        .append("\n📅 Date: ").append(event[1])
-                        .append("\n──────────────────────\n");
+            int selectedIndex = eventDropdown.getSelectedIndex();
+            if (selectedIndex == -1) {
+                showError("Please select an event to book.");
+                return;
             }
-            JOptionPane.showMessageDialog(this, eventDetails.toString(), "My Events", JOptionPane.INFORMATION_MESSAGE);
+
+            Map<String, String> selectedEvent = availableEvents.get(selectedIndex);
+            String eventName = selectedEvent.get("name");
+            
+            try {
+                boolean success = EventController.bookEvent(
+                    loggedInUser.getId(), 
+                    eventName, 
+                    selectedDate, 
+                    selectedTime
+                );
+                if (success) {
+                    showSuccess("Event booked successfully!");
+                    refreshEventList();
+                } else {
+                    showError("Failed to book event. Please try again.");
+                }
+            } catch (Exception e) {
+                showError("An error occurred while booking the event: " + e.getMessage());
+            }
         }
     }
 
+    private void showError(String message) {
+        JOptionPane.showMessageDialog(this, message, "Error", 
+            JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void showSuccess(String message) {
+        JOptionPane.showMessageDialog(this, message, "Success", 
+            JOptionPane.INFORMATION_MESSAGE);
+    }
 }

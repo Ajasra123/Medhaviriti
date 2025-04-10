@@ -9,81 +9,145 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class LoginFrame extends JFrame {
-    private JTextField emailField;
+    private JTextField usernameField;
     private JPasswordField passwordField;
     private JButton loginButton, registerButton;
 
     public LoginFrame() {
-        setTitle("Login");
-        setSize(400, 250);
+        setTitle("Medhaviriti - Login");
+        setSize(400, 300);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setLayout(new GridBagLayout());
+        setLayout(new BorderLayout(10, 10));
+
+        // Main Panel
+        JPanel mainPanel = new JPanel(new GridBagLayout());
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        mainPanel.setBackground(new Color(245, 245, 250));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
 
-        // Email Label
+        // Title
+        JLabel titleLabel = new JLabel("Welcome to Medhaviriti");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
         gbc.gridx = 0;
         gbc.gridy = 0;
-        add(new JLabel("Email:"), gbc);
+        gbc.gridwidth = 2;
+        mainPanel.add(titleLabel, gbc);
 
-        // Email Field
+        // Username Label
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        JLabel usernameLabel = new JLabel("Username:");
+        usernameLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        mainPanel.add(usernameLabel, gbc);
+
+        // Username Field
         gbc.gridx = 1;
-        emailField = new JTextField(20);
-        add(emailField, gbc);
+        usernameField = new JTextField();
+        usernameField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        mainPanel.add(usernameField, gbc);
 
         // Password Label
         gbc.gridx = 0;
-        gbc.gridy = 1;
-        add(new JLabel("Password:"), gbc);
+        gbc.gridy = 2;
+        JLabel passwordLabel = new JLabel("Password:");
+        passwordLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        mainPanel.add(passwordLabel, gbc);
 
         // Password Field
         gbc.gridx = 1;
-        passwordField = new JPasswordField(20);
-        add(passwordField, gbc);
+        passwordField = new JPasswordField();
+        passwordField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        mainPanel.add(passwordField, gbc);
+
+        // Button Panel
+        JPanel buttonPanel = new JPanel(new GridLayout(2, 1, 0, 10));
+        buttonPanel.setBackground(new Color(245, 245, 250));
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 
         // Login Button
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 2;
         loginButton = new JButton("Login");
+        styleButton(loginButton, new Color(0, 120, 212));
         loginButton.addActionListener(new LoginAction());
-        add(loginButton, gbc);
+        buttonPanel.add(loginButton);
 
         // Register Button
-        gbc.gridy = 3;
-        registerButton = new JButton("Register");
+        registerButton = new JButton("Create Account");
+        styleButton(registerButton, new Color(51, 51, 51));
         registerButton.addActionListener(e -> {
             new RegisterFrame().setVisible(true);
-            dispose(); // Close login frame
+            dispose();
         });
-        add(registerButton, gbc);
+        buttonPanel.add(registerButton);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.gridwidth = 2;
+        mainPanel.add(buttonPanel, gbc);
+
+        // Add main panel to frame
+        add(mainPanel, BorderLayout.CENTER);
+
+        // Add key listeners for Enter key
+        usernameField.addActionListener(e -> passwordField.requestFocus());
+        passwordField.addActionListener(e -> loginButton.doClick());
+    }
+
+    private void styleButton(JButton button, Color bgColor) {
+        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        button.setBackground(bgColor);
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(bgColor.brighter());
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(bgColor);
+            }
+        });
     }
 
     private class LoginAction implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            String email = emailField.getText();
+            String username = usernameField.getText().trim();
             String password = new String(passwordField.getPassword());
 
-            if (email.isEmpty() || password.isEmpty()) {
-                JOptionPane.showMessageDialog(LoginFrame.this, "Please enter both email and password.", "Login Failed",
-                        JOptionPane.ERROR_MESSAGE);
+            if (username.isEmpty() || password.isEmpty()) {
+                showError("Please enter both username and password.");
                 return;
             }
 
-            User user = LoginController.authenticateUser(email, password);
+            User user = LoginController.authenticateUser(username, password);
             if (user != null) {
-                JOptionPane.showMessageDialog(LoginFrame.this, "Login Successful!", "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
+                showSuccess("Login Successful!");
                 new EventFrame(user).setVisible(true);
-                dispose(); // Close login frame
+                dispose();
             } else {
-                JOptionPane.showMessageDialog(LoginFrame.this, "Invalid credentials. Try again.", "Login Failed",
-                        JOptionPane.ERROR_MESSAGE);
+                showError("Invalid credentials. Please try again.");
+                passwordField.setText("");
+                passwordField.requestFocus();
             }
         }
+    }
+
+    private void showError(String message) {
+        JOptionPane.showMessageDialog(this, message, "Login Failed",
+                JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void showSuccess(String message) {
+        JOptionPane.showMessageDialog(this, message, "Success",
+                JOptionPane.INFORMATION_MESSAGE);
     }
 
     public static void main(String[] args) {
